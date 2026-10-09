@@ -1,9 +1,6 @@
-# Categories and urgency levels allowed
 categories = ["Network", "Hardware", "Software", "Other"]
 urgencies = ["low", "medium", "high"]
 
-
-# This function calculates the priority of a ticket
 def calculate_priority(urgency, affected_users):
 
     if not isinstance(urgency, str):
@@ -30,14 +27,13 @@ def calculate_priority(urgency, affected_users):
         return "low"
 
 
-# This function creates a new ticket
 def create_ticket(tickets, title, category, urgency, affected_users):
 
-    # Check if the title is empty
+    
     if not isinstance(title, str) or title.strip() == "":
         raise ValueError("Title cannot be empty")
 
-    # Check the category
+    
     if not isinstance(category, str):
         raise ValueError("Invalid category")
 
@@ -46,7 +42,6 @@ def create_ticket(tickets, title, category, urgency, affected_users):
     if category not in categories:
         raise ValueError("Invalid category")
 
-    # Check the urgency
     if not isinstance(urgency, str):
         raise ValueError("Invalid urgency")
 
@@ -55,14 +50,14 @@ def create_ticket(tickets, title, category, urgency, affected_users):
     if urgency not in urgencies:
         raise ValueError("Invalid urgency")
 
-    # Check the number of affected users
+    
     if type(affected_users) != int or affected_users <= 0:
         raise ValueError("Affected users must be a positive integer")
 
-    # Calculate the ticket priority
+    
     priority = calculate_priority(urgency, affected_users)
 
-    # Find the highest ticket number
+    
     highest_id = 0
 
     for ticket in tickets:
@@ -71,10 +66,10 @@ def create_ticket(tickets, title, category, urgency, affected_users):
         if number > highest_id:
             highest_id = number
 
-    # Generate the next ticket ID
+    
     new_id = f"T{highest_id + 1:03d}"
 
-    # Store the ticket details
+    
     new_ticket = {
         "id": new_id,
         "title": title.strip(),
@@ -86,7 +81,7 @@ def create_ticket(tickets, title, category, urgency, affected_users):
         "assigned_to": None
     }
 
-    # Add the new ticket to the list
+    
     tickets.append(new_ticket)
 
     return new_ticket
