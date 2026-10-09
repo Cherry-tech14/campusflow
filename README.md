@@ -13,8 +13,8 @@ support tickets.
 
 ## Team Members
 
-1. Member One - GitHub: @username1
-2. Member Two - GitHub: @username2
+1. Member One - GitHub: enenchedominion2008
+2. Member Two - GitHub: Cherry-tech14
 
 ## Technologies
 
