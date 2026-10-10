@@ -84,7 +84,7 @@ class TestTickets(unittest.TestCase):
 
         self.assertEqual(len(self.tickets), 0)
 
-    def test_id_after_reload(self):
+    def test_id_with_existing_tickets(self):
         self.tickets = [
             {
                 "id": "T005",

@@ -9,7 +9,9 @@ PRIORITY_RANK = {
 
 
 def _numeric_ticket_id(ticket: dict) -> int:
-    """Extract the numeric portion of IDs such as T001."""
+ 
+    
+    """Extract the numeric portion of IDs such as T001.""" main
     ticket_id = str(ticket.get("id", ""))
     digits = ticket_id[1:] if ticket_id[:1].upper() == "T" else ticket_id
     try:

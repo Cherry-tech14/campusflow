@@ -1,16 +1,24 @@
 from campusflow.tickets import create_ticket
-
-tickets = []
+from campusflow.storage import save_tickets, load_tickets
 
 
 def main():
+
+    try:
+        tickets = load_tickets()
+
+    except (ValueError, OSError) as error:
+        print("Error loading tickets:", error)
+        print("Please fix the data file before starting CampusFlow.")
+        return
+
     while True:
         print("\nCAMPUSFLOW HELPDESK")
         print("1. Create Ticket")
         print("2. View Tickets")
         print("3. Exit")
 
-        choice = input("Enter your choice: ")
+        choice = input("Enter your choice: ").strip()
 
         if choice == "1":
             print("\nCreate Ticket")
@@ -31,6 +39,8 @@ def main():
                     affected_users
                 )
 
+                save_tickets(tickets)
+
                 print("\nTicket created successfully!")
                 print("Ticket ID:", ticket["id"])
                 print("Title:", ticket["title"])
@@ -39,6 +49,9 @@ def main():
 
             except ValueError as error:
                 print("Error:", error)
+
+            except OSError as error:
+                print("Error saving ticket:", error)
 
         elif choice == "2":
             print("\nAll Tickets")
@@ -55,6 +68,7 @@ def main():
                     print("Affected users:", ticket["affected_users"])
                     print("Priority:", ticket["priority"])
                     print("Status:", ticket["status"])
+                    print("Assigned to:", ticket["assigned_to"])
 
         elif choice == "3":
             print("Thank you for using CampusFlow!")
