@@ -222,9 +222,14 @@ https://github.com/Cherry-tech14/campusflow
 7. The integrated project is tested before submission.
 
 ### Pull Requests
-Engineer A :
+Engineer A : https://github.com/Cherry-tech14/campusflow/pull/13
 Engineer B: https://github.com/Cherry-tech14/campusflow/pull/10
 All pull requests can also be viewed here:
+
+
+Engineer B: https://github.com/Cherry-tech14/campusflow/pull/10
+
+### All pull requests can also be viewed here:
 
 https://github.com/Cherry-tech14/campusflow/pulls
 
