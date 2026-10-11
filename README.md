@@ -223,7 +223,7 @@ https://github.com/Cherry-tech14/campusflow
 
 ### Pull Requests
 Engineer A :
-Engineer B:
+Engineer B: https://github.com/Cherry-tech14/campusflow/pull/10
 All pull requests can also be viewed here:
 
 https://github.com/Cherry-tech14/campusflow/pulls
