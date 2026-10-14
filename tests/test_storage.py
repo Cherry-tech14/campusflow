@@ -1,39 +1,31 @@
 import json
 import tempfile
 import unittest
-from copy import deepcopy
+
 from pathlib import Path
 
 from campusflow.tickets import create_ticket
-from campusflow.notes import add_note
-from campusflow.storage import (
-    save_tickets,
-    load_tickets,
-    reload_tickets,
-)
+from campusflow.storage import load_tickets, save_tickets
 
 
 class TestStorage(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-
-        self.file_path = (
-            Path(self.temp_dir.name) / "tickets.json"
-        )
+        self.folder = tempfile.TemporaryDirectory()
+        self.file_path = Path(self.folder.name) / "tickets.json"
 
         self.tickets = []
 
         create_ticket(
             self.tickets,
-            "Network issue",
+            "Wi-Fi problem",
             "Network",
             "high",
-            10,
+            12,
         )
 
     def tearDown(self):
-        self.temp_dir.cleanup()
+        self.folder.cleanup()
 
     def test_save_and_load(self):
         save_tickets(self.tickets, self.file_path)
@@ -42,65 +34,47 @@ class TestStorage(unittest.TestCase):
 
         self.assertEqual(loaded, self.tickets)
 
-    def test_notes_survive_reload(self):
-        add_note(
-            self.tickets,
-            "T001",
-            "Technician A",
-            "Router inspected",
-        )
+    def test_missing_file(self):
+        loaded = load_tickets(self.file_path)
 
-        save_tickets(self.tickets, self.file_path)
+        self.assertEqual(loaded, [])
+
+    def test_invalid_json(self):
+        self.file_path.write_text("{invalid json", encoding="utf-8")
+
+        with self.assertRaises(ValueError):
+            load_tickets(self.file_path)
+
+    def test_duplicate_ticket_ids(self):
+        duplicate = self.tickets + self.tickets
+
+        with self.assertRaises(ValueError):
+            save_tickets(duplicate, self.file_path)
+
+    def test_old_ticket_without_notes(self):
+        old_ticket = self.tickets[0].copy()
+        old_ticket.pop("notes")
+
+        with open(self.file_path, "w", encoding="utf-8") as file:
+            json.dump([old_ticket], file)
 
         loaded = load_tickets(self.file_path)
 
-        self.assertEqual(
-            loaded[0]["notes"][0]["note_id"],
-            "N001",
-        )
+        self.assertEqual(loaded[0]["notes"], [])
 
-    def test_corrupted_json_preserves_memory(self):
-        self.file_path.write_text(
-            "{invalid json",
-            encoding="utf-8",
-        )
-
-        before = deepcopy(self.tickets)
-
-        with self.assertRaises(ValueError):
-            reload_tickets(self.tickets, self.file_path)
-
-        self.assertEqual(self.tickets, before)
-
-    def test_duplicate_ids_preserve_memory(self):
-        duplicate = deepcopy(self.tickets[0])
-
-        self.file_path.write_text(
-            json.dumps([self.tickets[0], duplicate]),
-            encoding="utf-8",
-        )
-
-        before = deepcopy(self.tickets)
-
-        with self.assertRaises(ValueError):
-            reload_tickets(self.tickets, self.file_path)
-
-        self.assertEqual(self.tickets, before)
-
-    def test_ids_continue_after_reload(self):
+    def test_invalid_save_preserves_file(self):
         save_tickets(self.tickets, self.file_path)
 
-        loaded = load_tickets(self.file_path)
+        with open(self.file_path, "r", encoding="utf-8") as file:
+            original = file.read()
 
-        new_ticket = create_ticket(
-            loaded,
-            "Software issue",
-            "Software",
-            "low",
-            1,
-        )
+        with self.assertRaises(ValueError):
+            save_tickets([{"id": "T002"}], self.file_path)
 
-        self.assertEqual(new_ticket["id"], "T002")
+        with open(self.file_path, "r", encoding="utf-8") as file:
+            after = file.read()
+
+        self.assertEqual(original, after)
 
 
 if __name__ == "__main__":

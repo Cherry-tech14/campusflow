@@ -3,167 +3,120 @@ import os
 import tempfile
 from pathlib import Path
 
-from campusflow.tickets import calculate_priority
 from campusflow.validation import (
-    CATEGORIES,
-    PRIORITIES,
-    STATUSES,
-    URGENCIES,
-    validate_affected_users,
-    validate_category,
-    validate_note_id,
     validate_ticket_id,
     validate_title,
+    validate_category,
     validate_urgency,
+    validate_affected_users,
+    validate_priority,
+    validate_status,
+    validate_staff,
+    validate_note_id,
+    validate_note_author,
+    validate_note_message,
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-FILE_PATH = BASE_DIR / "data" / "tickets.json"
-
-REQUIRED_FIELDS = {
-    "id",
-    "title",
-    "category",
-    "urgency",
-    "affected_users",
-    "priority",
-    "status",
-    "assigned_to",
-    "notes",
-}
+from campusflow.tickets import calculate_priority
 
 
-def validate_ticket(ticket):
+DATA_FILE = Path("data/tickets.json")
+
+
+def validate_ticket_record(ticket):
     if not isinstance(ticket, dict):
-        raise ValueError("Ticket must be a dictionary")
+        raise ValueError("Invalid ticket record")
 
-    if not REQUIRED_FIELDS.issubset(ticket):
-        raise ValueError("Ticket is missing required fields")
+    required_fields = [
+        "id",
+        "title",
+        "category",
+        "urgency",
+        "affected_users",
+        "priority",
+        "status",
+        "assigned_to",
+    ]
+
+    for field in required_fields:
+        if field not in ticket:
+            raise ValueError("Ticket is missing required fields")
 
     validate_ticket_id(ticket["id"])
     validate_title(ticket["title"])
-
-    if (
-        ticket["category"] not in CATEGORIES
-        or validate_category(ticket["category"]) != ticket["category"]
-    ):
-        raise ValueError("Invalid stored category")
-
-    if (
-        ticket["urgency"] not in URGENCIES
-        or validate_urgency(ticket["urgency"]) != ticket["urgency"]
-    ):
-        raise ValueError("Invalid stored urgency")
-
+    validate_category(ticket["category"])
+    validate_urgency(ticket["urgency"])
     validate_affected_users(ticket["affected_users"])
+    validate_priority(ticket["priority"])
+    validate_status(ticket["status"])
 
-    if ticket["status"] not in STATUSES:
-        raise ValueError("Invalid stored status")
+    if ticket["assigned_to"] is not None:
+        validate_staff(ticket["assigned_to"])
 
-    if ticket["priority"] not in PRIORITIES:
-        raise ValueError("Invalid stored priority")
-
-    expected_priority = calculate_priority(
+    correct_priority = calculate_priority(
         ticket["urgency"],
         ticket["affected_users"],
     )
 
-    if ticket["priority"] != expected_priority:
-        raise ValueError("Ticket priority does not match its inputs")
+    if ticket["priority"] != correct_priority:
+        raise ValueError("Incorrect ticket priority")
 
-    assigned_to = ticket["assigned_to"]
+    if ticket["status"] == "in_progress":
+        if ticket["assigned_to"] is None:
+            raise ValueError("In-progress ticket must be assigned")
 
-    if assigned_to is not None:
-        if not isinstance(assigned_to, str) or not assigned_to.strip():
-            raise ValueError("Invalid assigned staff")
-
-    if ticket["status"] == "in_progress" and assigned_to is None:
-        raise ValueError("In-progress ticket must be assigned")
+    if "notes" not in ticket:
+        ticket["notes"] = []
 
     if not isinstance(ticket["notes"], list):
         raise ValueError("Notes must be a list")
 
-    note_ids = set()
+    note_ids = []
 
     for note in ticket["notes"]:
         if not isinstance(note, dict):
-            raise ValueError("Invalid note structure")
+            raise ValueError("Invalid note")
 
-        if not {"note_id", "author", "message"}.issubset(note):
-            raise ValueError("Note is missing required fields")
+        if "note_id" not in note:
+            raise ValueError("Note ID is missing")
 
-        note_id = validate_note_id(note["note_id"])
+        if "author" not in note:
+            raise ValueError("Note author is missing")
 
-        if note_id in note_ids:
+        if "message" not in note:
+            raise ValueError("Note message is missing")
+
+        validate_note_id(note["note_id"])
+        validate_note_author(note["author"])
+        validate_note_message(note["message"])
+
+        if note["note_id"] in note_ids:
             raise ValueError("Duplicate note ID")
 
-        note_ids.add(note_id)
+        note_ids.append(note["note_id"])
 
-        author = note["author"]
-        message = note["message"]
-
-        if not isinstance(author, str) or not author.strip():
-            raise ValueError("Invalid note author")
-
-        if not isinstance(message, str):
-            raise ValueError("Invalid note message")
-
-        if not 5 <= len(message.strip()) <= 300:
-            raise ValueError("Invalid note message length")
-
-    return True
+    return ticket
 
 
-def validate_collection(tickets):
+def validate_tickets(tickets):
     if not isinstance(tickets, list):
-        raise ValueError("Ticket data must be a list")
+        raise ValueError("Tickets must be a list")
 
-    ticket_ids = set()
+    ticket_ids = []
 
     for ticket in tickets:
-        validate_ticket(ticket)
+        validate_ticket_record(ticket)
 
-        ticket_id = ticket["id"]
-
-        if ticket_id in ticket_ids:
+        if ticket["id"] in ticket_ids:
             raise ValueError("Duplicate ticket ID")
 
-        ticket_ids.add(ticket_id)
+        ticket_ids.append(ticket["id"])
 
-    return True
-
-
-def save_tickets(tickets, path=FILE_PATH):
-    validate_collection(tickets)
-
-    file_path = Path(path)
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    temporary_path = None
-
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=file_path.parent,
-            prefix=".tickets-",
-            suffix=".tmp",
-            delete=False,
-        ) as file:
-            temporary_path = Path(file.name)
-            json.dump(tickets, file, indent=4)
-            file.flush()
-            os.fsync(file.fileno())
-
-        os.replace(temporary_path, file_path)
-
-    finally:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
+    return tickets
 
 
-def load_tickets(path=FILE_PATH):
-    file_path = Path(path)
+def load_tickets(file_path=DATA_FILE):
+    file_path = Path(file_path)
 
     if not file_path.exists():
         return []
@@ -172,18 +125,44 @@ def load_tickets(path=FILE_PATH):
         with open(file_path, "r", encoding="utf-8") as file:
             tickets = json.load(file)
 
-    except (json.JSONDecodeError, UnicodeError) as error:
-        raise ValueError("Ticket data file contains invalid JSON") from error
+    except json.JSONDecodeError:
+        raise ValueError("Invalid JSON file")
 
-    validate_collection(tickets)
-
-    return tickets
+    return validate_tickets(tickets)
 
 
-def reload_tickets(tickets, path=FILE_PATH):
-    
-    loaded_tickets = load_tickets(path)
+def save_tickets(tickets, file_path=DATA_FILE):
+    file_path = Path(file_path)
 
-    tickets[:] = loaded_tickets
+    # Work on a copy so validation cannot change the original list.
+    import copy
+    tickets_copy = copy.deepcopy(tickets)
 
-    return tickets
+    validate_tickets(tickets_copy)
+
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    temporary_name = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=file_path.parent,
+            delete=False,
+        ) as file:
+            temporary_name = file.name
+            json.dump(tickets_copy, file, indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temporary_name, file_path)
+
+    finally:
+        if temporary_name is not None:
+            if os.path.exists(temporary_name):
+                os.remove(temporary_name)
+
+
+def reload_tickets(file_path=DATA_FILE):
+    return load_tickets(file_path)
