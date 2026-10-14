@@ -1,8 +1,10 @@
 from campusflow.validation import (
-    CATEGORIES,
-    STATUSES,
-    PRIORITIES,
+    validate_category,
+    validate_status,
+    validate_priority,
 )
+
+from campusflow.queue import PRIORITY_ORDER
 
 
 def search_tickets(
@@ -12,59 +14,85 @@ def search_tickets(
     status="",
     priority="",
 ):
-    filters = (title, category, status, priority)
+    if not isinstance(title, str):
+        raise ValueError("Title filter must be text")
 
-    if any(not isinstance(value, str) for value in filters):
-        raise ValueError("Search filters must be text")
+    if not isinstance(category, str):
+        raise ValueError("Category filter must be text")
 
-    title = title.strip().casefold()
-    category = category.strip().casefold()
-    status = status.strip().casefold()
-    priority = priority.strip().casefold()
+    if not isinstance(status, str):
+        raise ValueError("Status filter must be text")
 
-    if category and category not in {
-        item.casefold() for item in CATEGORIES
-    }:
-        raise ValueError("Invalid category filter")
+    if not isinstance(priority, str):
+        raise ValueError("Priority filter must be text")
 
-    if status and status not in STATUSES:
-        raise ValueError("Invalid status filter")
+    title = title.strip().lower()
+    category = category.strip()
+    status = status.strip()
+    priority = priority.strip().lower()
 
-    if priority and priority not in PRIORITIES:
-        raise ValueError("Invalid priority filter")
+    if category != "":
+        category = validate_category(category)
+
+    if status != "":
+        status = validate_status(status)
+
+    if priority != "":
+        priority = validate_priority(priority)
 
     results = []
 
     for ticket in tickets:
-        if title and title not in ticket["title"].casefold():
-            continue
+        matches = True
 
-        if category and category != ticket["category"].casefold():
-            continue
+        if title != "":
+            if title not in ticket["title"].lower():
+                matches = False
 
-        if status and status != ticket["status"]:
-            continue
+        if category != "":
+            if ticket["category"] != category:
+                matches = False
 
-        if priority and priority != ticket["priority"]:
-            continue
+        if status != "":
+            if ticket["status"] != status:
+                matches = False
 
-        results.append(ticket)
+        if priority != "":
+            if ticket["priority"] != priority:
+                matches = False
+
+        if matches:
+            results.append(ticket)
 
     return results
 
 
 def sort_search_results(tickets):
-    priority_order = {
-        "critical": 0,
-        "high": 1,
-        "medium": 2,
-        "low": 3,
-    }
+    results = tickets.copy()
 
-    return sorted(
-        tickets,
-        key=lambda ticket: (
-            priority_order[ticket["priority"]],
-            int(ticket["id"][1:]),
-        ),
-    )
+    for i in range(len(results)):
+        for j in range(i + 1, len(results)):
+
+            first = results[i]
+            second = results[j]
+
+            first_priority = PRIORITY_ORDER[first["priority"]]
+            second_priority = PRIORITY_ORDER[second["priority"]]
+
+            should_swap = False
+
+            if first_priority > second_priority:
+                should_swap = True
+
+            elif first_priority == second_priority:
+                first_id = int(first["id"][1:])
+                second_id = int(second["id"][1:])
+
+                if first_id > second_id:
+                    should_swap = True
+
+            if should_swap:
+                results[i] = second
+                results[j] = first
+
+    return results
