@@ -1,164 +1,126 @@
 QUESTIONS = [
     {
-        "question": (
-            "Ticket T001 is open and unassigned. "
-            "A user tries to move it to in_progress."
-        ),
-        "options": {
-            "A": "Accept",
-            "B": "Reject and preserve all data",
-            "C": "Resolve it automatically",
-            "D": "Remove ticket",
-        },
+        "question": "Which file validates user input?",
+        "options": [
+            "A. reports.py",
+            "B. validation.py",
+            "C. queue.py",
+        ],
         "answer": "B",
     },
     {
-        "question": (
-            "The app has zero tickets. "
-            "What should resolution percentage display?"
-        ),
-        "options": {
-            "A": "Crash",
-            "B": "100%",
-            "C": "0%",
-            "D": "Divide by one without explanation",
-        },
+        "question": "What does create_ticket() do?",
+        "options": [
+            "A. Creates a ticket",
+            "B. Deletes tickets",
+            "C. Generates reports",
+        ],
+        "answer": "A",
+    },
+    {
+        "question": "Which status comes after open?",
+        "options": [
+            "A. resolved",
+            "B. closed",
+            "C. in_progress",
+        ],
         "answer": "C",
     },
     {
-        "question": (
-            "Filter title='wifi', category='Network', "
-            "status='open'. Which records should match?"
-        ),
-        "options": {
-            "A": "Any record matching one filter",
-            "B": "Only records matching all supplied filters",
-            "C": "All network records",
-            "D": "All open records",
-        },
+        "question": "What is JSON used for in CampusFlow?",
+        "options": [
+            "A. Changing priority",
+            "B. Saving ticket data",
+            "C. Assigning tickets",
+        ],
         "answer": "B",
     },
     {
-        "question": (
-            "A resolved ticket receives 'Add note'. "
-            "What should happen?"
-        ),
-        "options": {
-            "A": "Append anyway",
-            "B": "Delete old notes",
-            "C": "Reject until reopened",
-            "D": "Change status silently",
-        },
-        "answer": "C",
+        "question": "Which tickets appear in the work queue?",
+        "options": [
+            "A. Open tickets",
+            "B. Resolved tickets",
+            "C. All tickets",
+        ],
+        "answer": "A",
     },
     {
-        "question": (
-            "The JSON file includes two tickets with the same ID. "
-            "What should load do?"
-        ),
-        "options": {
-            "A": "Keep both",
-            "B": "Replace memory with duplicates",
-            "C": "Reject the load without changing current memory",
-            "D": "Rename IDs silently",
-        },
+        "question": "What is unittest used for?",
+        "options": [
+            "A. Creating Git branches",
+            "B. Designing websites",
+            "C. Testing Python code",
+        ],
         "answer": "C",
-    },
-    {
-        "question": (
-            "A PR changes validation but has no negative-case tests. "
-            "What is the best review action?"
-        ),
-        "options": {
-            "A": "Approve because it runs",
-            "B": "Request focused tests and reasoning",
-            "C": "Merge immediately",
-            "D": "Ask AI to approve it",
-        },
-        "answer": "B",
     },
 ]
 
 
-def calculate_score(answers, questions=QUESTIONS):
-    if len(answers) != len(questions):
+def check_answer(question, answer):
+    if not isinstance(answer, str):
+        return False
+
+    answer = answer.strip().upper()
+
+    if answer == question["answer"]:
+        return True
+
+    return False
+
+
+def calculate_score(answers):
+    if len(answers) != len(QUESTIONS):
         raise ValueError("Incorrect number of answers")
 
     score = 0
 
-    for answer, question in zip(answers, questions):
-        if not isinstance(answer, str):
-            raise ValueError("Invalid quiz answer")
+    for i in range(len(QUESTIONS)):
+        question = QUESTIONS[i]
+        answer = answers[i]
 
-        choice = answer.strip().upper()
-
-        if choice not in ("A", "B", "C", "D"):
-            raise ValueError("Invalid quiz answer")
-
-        if choice == question["answer"]:
+        if check_answer(question, answer):
             score += 1
 
     return score
 
 
-def get_answer(prompt="Your answer (A/B/C/D): "):
-    while True:
-        answer = input(prompt).strip().upper()
-
-        if answer in ("A", "B", "C", "D"):
-            return answer
-
-        print("Invalid answer. Enter A, B, C or D.")
-
-
 def run_understanding_check():
-    print("\nENGINEERING UNDERSTANDING CHECK")
-    print("-" * 40)
+    print("\n=== ENGINEERING UNDERSTANDING CHECK ===")
 
     answers = []
 
-    for number, question in enumerate(QUESTIONS, start=1):
-        print(f"\nQuestion {number}: {question['question']}")
+    question_number = 1
 
-        for letter, option in question["options"].items():
-            print(f"{letter}. {option}")
+    for question in QUESTIONS:
+        print()
+        print("Question", question_number)
+        print(question["question"])
 
-        answer = get_answer()
+        for option in question["options"]:
+            print(option)
+
+        while True:
+            answer = input("Your answer (A/B/C): ").strip().upper()
+
+            if answer == "A" or answer == "B" or answer == "C":
+                break
+
+            print("Please enter A, B, or C.")
 
         answers.append(answer)
-
-        if answer == question["answer"]:
-            print("Correct!")
-        else:
-            print(f"Incorrect. Correct answer: {question['answer']}")
+        question_number += 1
 
     score = calculate_score(answers)
 
-    print(f"\nFinal Score: {score}/{len(QUESTIONS)}")
+    print("\nYour score:", score, "out of", len(QUESTIONS))
 
-    print("\nExplain your reasoning for two questions.")
+    if score == 6:
+        print("Excellent understanding!")
 
-    explanations = []
+    elif score >= 4:
+        print("Good work!")
 
-    for number in (1, 2):
-        while True:
-            explanation = input(
-                f"Explain your answer to Question {number}: "
-            ).strip()
+    else:
+        print("Keep practising!")
 
-            if explanation:
-                explanations.append({
-                    "question": number,
-                    "explanation": explanation,
-                })
-                break
-
-            print("Please provide an explanation.")
-
-    print("\nExplanations recorded for mentor discussion.")
-
-    return {
-        "score": score,
-        "answers": answers,
-        "explanations": explanations,
-    }
+    return score

@@ -1,209 +1,350 @@
-
 from campusflow.tickets import create_ticket
-from campusflow.storage import (
-    save_tickets,
-    load_tickets,
+
+from campusflow.workflow import (
     assign_ticket,
     update_status,
 )
+
+from campusflow.notes import (
+    add_note,
+    view_notes,
+)
+
+from campusflow.storage import (
+    load_tickets,
+    save_tickets,
+)
+
 from campusflow.queue import get_work_queue
+
+from campusflow.search import (
+    search_tickets,
+    sort_search_results,
+)
+
 from campusflow.reports import generate_report
+
+from campusflow.understanding_checks import run_understanding_check
+
+
+def display_ticket(ticket):
+    print("\n------------------------------")
+    print("Ticket ID:", ticket["id"])
+    print("Title:", ticket["title"])
+    print("Category:", ticket["category"])
+    print("Urgency:", ticket["urgency"])
+    print("Affected Users:", ticket["affected_users"])
+    print("Priority:", ticket["priority"])
+    print("Status:", ticket["status"])
+    print("Assigned To:", ticket["assigned_to"])
+    print("Number of Notes:", len(ticket.get("notes", [])))
+    print("------------------------------")
+
+
+
+
+def display_tickets(tickets):
+    if len(tickets) == 0:
+        print("\nNo tickets found.")
+        return
+
+    for ticket in tickets:
+        display_ticket(ticket)
+
+
+def display_menu():
+    print("\n========== CAMPUSFLOW NEXT ==========")
+    print("1. Create Ticket")
+    print("2. View All Tickets")
+    print("3. Assign Ticket")
+    print("4. Change Ticket Status")
+    print("5. Reopen Resolved Ticket")
+    print("6. View Open Work Queue")
+    print("7. Add Follow-up Note")
+    print("8. View Ticket Notes")
+    print("9. Search Tickets")
+    print("10. Generate Reports")
+    print("11. Engineering Understanding Check")
+    print("12. Exit")
+    print("=====================================")
+
+
 
 
 def main():
-
     try:
         tickets = load_tickets()
 
     except (ValueError, OSError) as error:
         print("Error loading tickets:", error)
-        print("Please fix the data file before starting CampusFlow.")
         return
 
+    print("\nWelcome to CampusFlow Next!")
+
     while True:
-        print("\n== CAMPUSFLOW HELPDESK ==")
-        print("1. Create Ticket")
-        print("2. View Tickets")
-        print("3. Assign Ticket")
-        print("4. Change Ticket Status")
-        print("5. Reopen Resolved Ticket")
-        print("6. View Work Queue")
-        print("7. View Reports")
-        print("8. Exit")
-        print("=========================================")
+        display_menu()
 
-        choice = input("Enter your choice: ").strip()
+        choice = input("\nChoose an option: ").strip()
 
+        
         if choice == "1":
-            print("\nCreate Ticket")
+            print("\n=== CREATE TICKET ===")
 
-            title = input("Enter ticket title: ")
-            category = input(
-                "Enter category (Network/Hardware/Software/Other): "
-            )
-            urgency = input("Enter urgency (low/medium/high): ")
-            users = input("Enter number of affected users: ")
+            title = input("Ticket title: ")
+            category = input("Category (Network/Hardware/Software/Other): ")
+            urgency = input("Urgency (low/medium/high): ")
+
+            users_input = input("Number of affected users: ")
 
             try:
-                affected_users = int(users)
+                affected_users = int(users_input)
+
+                
+                import copy
+                updated_tickets = copy.deepcopy(tickets)
 
                 ticket = create_ticket(
-                    tickets,
+                    updated_tickets,
                     title,
                     category,
                     urgency,
-                    affected_users
+                    affected_users,
                 )
 
-                save_tickets(tickets)
+                save_tickets(updated_tickets)
+                tickets = updated_tickets
 
                 print("\nTicket created successfully!")
-                print("Ticket ID:", ticket["id"])
-                print("Title:", ticket["title"])
-                print("Priority:", ticket["priority"])
-                print("Status:", ticket["status"])
+                display_ticket(ticket)
 
-            except ValueError as error:
+            except (ValueError, OSError) as error:
                 print("Error:", error)
 
-            except OSError as error:
-                print("Error saving ticket:", error)
-
+        
         elif choice == "2":
-            print("\nAll Tickets")
+            print("\n=== ALL TICKETS ===")
+            display_tickets(tickets)
 
-            if not tickets:
-                print("No tickets available.")
+    
+        elif choice == "3":
+            print("\n=== ASSIGN TICKET ===")
+
+            ticket_id = input("Ticket ID: ").strip().upper()
+            staff_name = input("Staff name: ")
+
+            try:
+                import copy
+                updated_tickets = copy.deepcopy(tickets)
+
+                ticket = assign_ticket(
+                    updated_tickets,
+                    ticket_id,
+                    staff_name,
+                )
+
+                save_tickets(updated_tickets)
+                tickets = updated_tickets
+
+                print("\nTicket assigned successfully!")
+                display_ticket(ticket)
+
+            except (ValueError, OSError) as error:
+                print("Error:", error)
+
+        # CHANGE STATUS
+        elif choice == "4":
+            print("\n=== CHANGE TICKET STATUS ===")
+
+            ticket_id = input("Ticket ID: ").strip().upper()
+
+            print("1. open")
+            print("2. in_progress")
+            print("3. resolved")
+
+            status_choice = input("Choose status: ").strip()
+
+            if status_choice == "1":
+                new_status = "open"
+
+            elif status_choice == "2":
+                new_status = "in_progress"
+
+            elif status_choice == "3":
+                new_status = "resolved"
 
             else:
-                for ticket in tickets:
-                    print("\n-------------------------")
-                    print("ID:", ticket["id"])
-                    print("Title:", ticket["title"])
-                    print("Category:", ticket["category"])
-                    print("Urgency:", ticket["urgency"])
-                    print("Affected users:", ticket["affected_users"])
-                    print("Priority:", ticket["priority"])
-                    print("Status:", ticket["status"])
-                    print("Assigned to:", ticket.get("assigned_to"))
-
-        # OPTION 3: ASSIGN TICKET - ENGINEER B
-        elif choice == "3":
-            print("\nAssign Ticket")
-
-            ticket_id = input("Enter ticket ID: ").strip()
-            staff_name = input("Enter staff member's name: ").strip()
+                print("Invalid status choice.")
+                continue
 
             try:
-                assign_ticket(tickets, ticket_id, staff_name)
-                save_tickets(tickets)
+                import copy
+                updated_tickets = copy.deepcopy(tickets)
 
-                print("Ticket assigned successfully!")
+                ticket = update_status(
+                    updated_tickets,
+                    ticket_id,
+                    new_status,
+                )
 
-            except ValueError as error:
+                save_tickets(updated_tickets)
+                tickets = updated_tickets
+
+                print("\nStatus updated successfully!")
+                display_ticket(ticket)
+
+            except (ValueError, OSError) as error:
                 print("Error:", error)
 
-            except OSError as error:
-                print("Error saving ticket:", error)
-
-        # OPTION 4: CHANGE STATUS - ENGINEER B
-        elif choice == "4":
-            print("\nChange Ticket Status")
-            print("Available transitions:")
-            print("open -> in_progress")
-            print("in_progress -> resolved")
-
-            ticket_id = input("Enter ticket ID: ").strip()
-            new_status = input(
-                "Enter new status (in_progress/resolved): "
-            ).strip().lower()
-
-            try:
-                update_status(tickets, ticket_id, new_status)
-                save_tickets(tickets)
-
-                print("Ticket status updated successfully!")
-
-            except ValueError as error:
-                print("Error:", error)
-
-            except OSError as error:
-                print("Error saving ticket:", error)
-
-        # OPTION 5: REOPEN RESOLVED TICKET - ENGINEER B
+        # REOPEN TICKET
         elif choice == "5":
-            print("\nReopen Resolved Ticket")
+            print("\n=== REOPEN TICKET ===")
 
-            ticket_id = input(
-                "Enter the ID of the resolved ticket: "
-            ).strip()
+            ticket_id = input("Ticket ID: ").strip().upper()
 
             try:
-                update_status(tickets, ticket_id, "open")
-                save_tickets(tickets)
+                import copy
+                updated_tickets = copy.deepcopy(tickets)
 
-                print("Ticket reopened successfully!")
-                print("New status: open")
+                ticket = update_status(
+                    updated_tickets,
+                    ticket_id,
+                    "open",
+                )
 
-            except ValueError as error:
+                save_tickets(updated_tickets)
+                tickets = updated_tickets
+
+                print("\nTicket reopened successfully!")
+                display_ticket(ticket)
+
+            except (ValueError, OSError) as error:
                 print("Error:", error)
 
-            except OSError as error:
-                print("Error saving ticket:", error)
-
-        # OPTION 6: VIEW WORK QUEUE - ENGINEER B
+        # WORK QUEUE
         elif choice == "6":
-            print("\nWork Queue")
+            print("\n=== OPEN WORK QUEUE ===")
+
+            queue = get_work_queue(tickets)
+
+            display_tickets(queue)
+
+        # ADD NOTE
+        elif choice == "7":
+            print("\n=== ADD FOLLOW-UP NOTE ===")
+
+            ticket_id = input("Ticket ID: ").strip().upper()
+            author = input("Author: ")
+            message = input("Note message: ")
 
             try:
-                queue = get_work_queue(tickets)
+                import copy
+                updated_tickets = copy.deepcopy(tickets)
 
-                if not queue:
-                    print("There are no unresolved tickets.")
+                note = add_note(
+                    updated_tickets,
+                    ticket_id,
+                    author,
+                    message,
+                )
+
+                save_tickets(updated_tickets)
+                tickets = updated_tickets
+
+                print("\nNote added successfully!")
+                print("Note ID:", note["note_id"])
+                print("Author:", note["author"])
+                print("Message:", note["message"])
+
+            except (ValueError, OSError) as error:
+                print("Error:", error)
+
+        # VIEW NOTES
+        elif choice == "8":
+            print("\n=== VIEW TICKET NOTES ===")
+
+            ticket_id = input("Ticket ID: ").strip().upper()
+
+            try:
+                notes = view_notes(tickets, ticket_id)
+
+                if len(notes) == 0:
+                    print("No notes found.")
 
                 else:
-                    for ticket in queue:
-                        print("\n-------------------------")
-                        print("ID:", ticket["id"])
-                        print("Title:", ticket["title"])
-                        print("Priority:", ticket["priority"])
-                        print("Status:", ticket["status"])
-                        print("Assigned to:", ticket.get("assigned_to"))
+                    for note in notes:
+                        print("\nNote ID:", note["note_id"])
+                        print("Author:", note["author"])
+                        print("Message:", note["message"])
 
-            except (KeyError, ValueError) as error:
-                print("Error displaying work queue:", error)
+            except ValueError as error:
+                print("Error:", error)
 
-        # OPTION 7: VIEW REPORTS - ENGINEER B
-        elif choice == "7":
-            print("\n========== TICKET REPORT ==========")
+        # SEARCH TICKETS
+        elif choice == "9":
+            print("\n=== SEARCH TICKETS ===")
+            print("Leave a filter blank to skip it.")
+
+            title = input("Title: ")
+            category = input("Category: ")
+            status = input("Status: ")
+            priority = input("Priority: ")
 
             try:
-                report = generate_report(tickets)
+                results = search_tickets(
+                    tickets,
+                    title,
+                    category,
+                    status,
+                    priority,
+                )
 
-                print("Total tickets:", report["total"])
+                results = sort_search_results(results)
 
-                print("\nTickets by status:")
-                for status, count in report["by_status"].items():
-                    print(f"{status}: {count}")
+                print("\nMatching tickets:", len(results))
 
-                print("\nTickets by priority:")
-                for priority, count in report["by_priority"].items():
-                    print(f"{priority}: {count}")
+                display_tickets(results)
 
-                print("===================================")
+            except ValueError as error:
+                print("Error:", error)
 
-            except (KeyError, TypeError) as error:
-                print("Error generating report:", error)
+    
+        elif choice == "10":
+            print("\n=== TICKET REPORT ===")
 
-        # OPTION 8: EXIT
-        elif choice == "8":
-            print("Thank you for using CampusFlow!")
+            report = generate_report(tickets)
+
+            print("\nTotal Tickets:", report["total"])
+
+            print("\nTickets by Status:")
+            for status in report["by_status"]:
+                print(status, ":", report["by_status"][status])
+
+            print("\nTickets by Priority:")
+            for priority in report["by_priority"]:
+                print(priority, ":", report["by_priority"][priority])
+
+            print("\nTickets by Category:")
+            for category in report["by_category"]:
+                print(category, ":", report["by_category"][category])
+
+            print("\nResolved Tickets:", report["resolved"])
+            print("Unresolved Tickets:", report["unresolved"])
+
+            percentage = report["resolution_percentage"]
+
+            print("Resolution Percentage:", round(percentage, 2), "%")
+
+        elif choice == "11":
+            run_understanding_check()
+
+        
+        elif choice == "12":
+            print("\nThank you for using CampusFlow Next!")
             break
 
         else:
-            print("Invalid choice. Please enter a number from 1 to 8.")
+            print("\nInvalid option. Please choose 1 to 12.")
 
 
 if __name__ == "__main__":
     main()
-
