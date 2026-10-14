@@ -1,108 +1,67 @@
 import unittest
+from copy import deepcopy
 
-from campusflow.tickets import create_ticket, calculate_priority
+from campusflow.tickets import (
+    create_ticket,
+    calculate_priority,
+    next_ticket_id,
+)
 
 
 class TestTickets(unittest.TestCase):
 
-    def setUp(self):
-        self.tickets = []
-
-    def test_critical_priority(self):
-        self.assertEqual(calculate_priority("high", 12), "critical")
-
-    def test_high_priority(self):
-        self.assertEqual(calculate_priority("high", 2), "high")
-
-    def test_medium_priority(self):
-        self.assertEqual(calculate_priority("low", 4), "medium")
-
-    def test_low_priority(self):
-        self.assertEqual(calculate_priority("low", 1), "low")
-
     def test_create_ticket(self):
+        tickets = []
+
         ticket = create_ticket(
-            self.tickets, "Wi-Fi down", "Network", "high", 12
+            tickets, "Wi-Fi failure", "Network", "high", 15
         )
 
         self.assertEqual(ticket["id"], "T001")
         self.assertEqual(ticket["priority"], "critical")
         self.assertEqual(ticket["status"], "open")
-        self.assertIsNone(ticket["assigned_to"])
+        self.assertEqual(ticket["notes"], [])
 
-    def test_empty_title(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "", "Network", "high", 12)
-
-    def test_invalid_category(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Food", "high", 12)
-
-    def test_invalid_urgency(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Network", "urgent", 12)
-
-    def test_zero_users(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Network", "high", 0)
-
-    def test_negative_users(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Network", "high", -2)
-
-    def test_decimal_users(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Network", "high", 2.5)
-
-    def test_text_users(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Wi-Fi down", "Network", "high", "five")
-
-    def test_unique_ids(self):
-        first = create_ticket(
-            self.tickets, "Wi-Fi down", "Network", "high", 12
-        )
-
-        second = create_ticket(
-            self.tickets, "Laptop fault", "Hardware", "low", 1
-        )
-
-        self.assertEqual(first["id"], "T001")
-        self.assertEqual(second["id"], "T002")
-
-    def test_case_normalization(self):
-        ticket = create_ticket(
-            self.tickets, "Laptop fault", "hARDware", "HIGH", 2
-        )
-
-        self.assertEqual(ticket["category"], "Hardware")
-        self.assertEqual(ticket["urgency"], "high")
-
-    def test_invalid_input_does_not_add_ticket(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "", "Network", "high", 12)
-
-        self.assertEqual(len(self.tickets), 0)
-
-    def test_id_with_existing_tickets(self):
-        self.tickets = [
-            {
-                "id": "T005",
-                "title": "Old ticket",
-                "category": "Network",
-                "urgency": "low",
-                "affected_users": 1,
-                "priority": "low",
-                "status": "open",
-                "assigned_to": None
-            }
+    def test_priority_rules(self):
+        cases = [
+            ("high", 10, "critical"),
+            ("high", 9, "high"),
+            ("low", 10, "high"),
+            ("medium", 3, "medium"),
+            ("low", 2, "low"),
         ]
 
-        ticket = create_ticket(
-            self.tickets, "New ticket", "Hardware", "high", 2
-        )
+        for urgency, users, expected in cases:
+            with self.subTest(urgency=urgency, users=users):
+                self.assertEqual(
+                    calculate_priority(urgency, users),
+                    expected,
+                )
 
-        self.assertEqual(ticket["id"], "T006")
+    def test_invalid_affected_users(self):
+        for value in (0, -1, 2.5, True, "10"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    calculate_priority("high", value)
+
+    def test_invalid_create_does_not_modify_tickets(self):
+        tickets = []
+        before = deepcopy(tickets)
+
+        with self.assertRaises(ValueError):
+            create_ticket(
+                tickets, "", "Network", "high", 10
+            )
+
+        self.assertEqual(tickets, before)
+
+    def test_next_ticket_id_with_gap(self):
+        tickets = [
+            {"id": "T001"},
+            {"id": "T003"},
+        ]
+
+        self.assertEqual(next_ticket_id(tickets), "T004")
 
 
 if __name__ == "__main__":

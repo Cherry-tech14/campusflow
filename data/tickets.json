@@ -16,7 +16,27 @@
         "urgency": "high",
         "affected_users": 4,
         "priority": "high",
-        "status": "open",
+        "status": "resolved",
         "assigned_to": "dominion"
+    },
+    {
+        "id": "T003",
+        "title": "internet failure",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 15,
+        "priority": "critical",
+        "status": "open",
+        "assigned_to": null
+    },
+    {
+        "id": "T004",
+        "title": "Internet failure",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 15,
+        "priority": "critical",
+        "status": "open",
+        "assigned_to": null
     }
 ]

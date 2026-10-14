@@ -1,16 +1,165 @@
 import json
+import os
+import tempfile
 from pathlib import Path
 
+from campusflow.tickets import calculate_priority
+from campusflow.validation import (
+    CATEGORIES,
+    PRIORITIES,
+    STATUSES,
+    URGENCIES,
+    validate_affected_users,
+    validate_category,
+    validate_note_id,
+    validate_ticket_id,
+    validate_title,
+    validate_urgency,
+)
 
-FILE_PATH = "data/tickets.json"
+BASE_DIR = Path(__file__).resolve().parent.parent
+FILE_PATH = BASE_DIR / "data" / "tickets.json"
+
+REQUIRED_FIELDS = {
+    "id",
+    "title",
+    "category",
+    "urgency",
+    "affected_users",
+    "priority",
+    "status",
+    "assigned_to",
+    "notes",
+}
+
+
+def validate_ticket(ticket):
+    if not isinstance(ticket, dict):
+        raise ValueError("Ticket must be a dictionary")
+
+    if not REQUIRED_FIELDS.issubset(ticket):
+        raise ValueError("Ticket is missing required fields")
+
+    validate_ticket_id(ticket["id"])
+    validate_title(ticket["title"])
+
+    if (
+        ticket["category"] not in CATEGORIES
+        or validate_category(ticket["category"]) != ticket["category"]
+    ):
+        raise ValueError("Invalid stored category")
+
+    if (
+        ticket["urgency"] not in URGENCIES
+        or validate_urgency(ticket["urgency"]) != ticket["urgency"]
+    ):
+        raise ValueError("Invalid stored urgency")
+
+    validate_affected_users(ticket["affected_users"])
+
+    if ticket["status"] not in STATUSES:
+        raise ValueError("Invalid stored status")
+
+    if ticket["priority"] not in PRIORITIES:
+        raise ValueError("Invalid stored priority")
+
+    expected_priority = calculate_priority(
+        ticket["urgency"],
+        ticket["affected_users"],
+    )
+
+    if ticket["priority"] != expected_priority:
+        raise ValueError("Ticket priority does not match its inputs")
+
+    assigned_to = ticket["assigned_to"]
+
+    if assigned_to is not None:
+        if not isinstance(assigned_to, str) or not assigned_to.strip():
+            raise ValueError("Invalid assigned staff")
+
+    if ticket["status"] == "in_progress" and assigned_to is None:
+        raise ValueError("In-progress ticket must be assigned")
+
+    if not isinstance(ticket["notes"], list):
+        raise ValueError("Notes must be a list")
+
+    note_ids = set()
+
+    for note in ticket["notes"]:
+        if not isinstance(note, dict):
+            raise ValueError("Invalid note structure")
+
+        if not {"note_id", "author", "message"}.issubset(note):
+            raise ValueError("Note is missing required fields")
+
+        note_id = validate_note_id(note["note_id"])
+
+        if note_id in note_ids:
+            raise ValueError("Duplicate note ID")
+
+        note_ids.add(note_id)
+
+        author = note["author"]
+        message = note["message"]
+
+        if not isinstance(author, str) or not author.strip():
+            raise ValueError("Invalid note author")
+
+        if not isinstance(message, str):
+            raise ValueError("Invalid note message")
+
+        if not 5 <= len(message.strip()) <= 300:
+            raise ValueError("Invalid note message length")
+
+    return True
+
+
+def validate_collection(tickets):
+    if not isinstance(tickets, list):
+        raise ValueError("Ticket data must be a list")
+
+    ticket_ids = set()
+
+    for ticket in tickets:
+        validate_ticket(ticket)
+
+        ticket_id = ticket["id"]
+
+        if ticket_id in ticket_ids:
+            raise ValueError("Duplicate ticket ID")
+
+        ticket_ids.add(ticket_id)
+
+    return True
 
 
 def save_tickets(tickets, path=FILE_PATH):
+    validate_collection(tickets)
+
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(tickets, file, indent=4)
+    temporary_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=file_path.parent,
+            prefix=".tickets-",
+            suffix=".tmp",
+            delete=False,
+        ) as file:
+            temporary_path = Path(file.name)
+            json.dump(tickets, file, indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temporary_path, file_path)
+
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def load_tickets(path=FILE_PATH):
@@ -23,75 +172,18 @@ def load_tickets(path=FILE_PATH):
         with open(file_path, "r", encoding="utf-8") as file:
             tickets = json.load(file)
 
-    except json.JSONDecodeError:
-        raise ValueError("Ticket data file contains invalid JSON")
+    except (json.JSONDecodeError, UnicodeError) as error:
+        raise ValueError("Ticket data file contains invalid JSON") from error
 
-    if not isinstance(tickets, list):
-        raise ValueError("Ticket data must be a list")
+    validate_collection(tickets)
 
     return tickets
 
 
-def find_ticket(tickets, ticket_id):
-    for ticket in tickets:
-        if ticket["id"] == ticket_id:
-            return ticket
+def reload_tickets(tickets, path=FILE_PATH):
+    
+    loaded_tickets = load_tickets(path)
 
-    raise ValueError("Ticket not found")
+    tickets[:] = loaded_tickets
 
-
-def assign_ticket(tickets, ticket_id, staff_name):
-    ticket = find_ticket(tickets, ticket_id)
-
-    if ticket["status"] == "resolved":
-        raise ValueError("Cannot assign a resolved ticket")
-
-    if not isinstance(staff_name, str) or staff_name.strip() == "":
-        raise ValueError("Staff name cannot be empty")
-
-    ticket["assigned_to"] = staff_name.strip()
-
-    return ticket
-
-
-def update_status(tickets, ticket_id, new_status):
-    ticket = find_ticket(tickets, ticket_id)
-
-    if not isinstance(new_status, str):
-        raise ValueError("Invalid status")
-
-    new_status = new_status.strip().lower()
-
-    valid_statuses = ["open", "in_progress", "resolved"]
-
-    if new_status not in valid_statuses:
-        raise ValueError("Invalid status")
-
-    current_status = ticket["status"]
-
-    if current_status == "resolved":
-        if new_status != "open":
-            raise ValueError("Resolved tickets must be reopened first")
-
-    elif current_status == "open":
-        if new_status != "in_progress":
-            raise ValueError(
-                "Open tickets can only move to in_progress"
-            )
-
-        if ticket.get("assigned_to") is None:
-            raise ValueError("Assign the ticket before starting work")
-
-    elif current_status == "in_progress":
-        if new_status != "resolved":
-            raise ValueError(
-                "In-progress tickets can only move to resolved"
-            )
-
-    else:
-        raise ValueError("Invalid current ticket status")
-
-    ticket["status"] = new_status
-
-    return ticket
-
+    return tickets
