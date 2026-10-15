@@ -1,99 +1,150 @@
-
 import unittest
+from copy import deepcopy
 
 from campusflow.queue import get_work_queue
 
 
-def make_ticket(ticket_id, priority, status="open"):
-    return {
-        "id": ticket_id,
-        "title": f"Ticket {ticket_id}",
-        "category": "Network",
-        "urgency": "medium",
-        "affected_users": 3,
-        "priority": priority,
-        "status": status,
-        "assigned_to": None,
-    }
-
-
 class TestWorkQueue(unittest.TestCase):
 
-    def test_critical_tickets_come_first(self):
+    def setUp(self):
+        self.tickets = [
+            {
+                "id": "T001",
+                "title": "Internet failure",
+                "priority": "critical",
+                "status": "resolved",
+            },
+            {
+                "id": "T002",
+                "title": "Laptop issue",
+                "priority": "high",
+                "status": "open",
+            },
+            {
+                "id": "T003",
+                "title": "Software installation",
+                "priority": "medium",
+                "status": "in_progress",
+            },
+            {
+                "id": "T004",
+                "title": "Wi-Fi connection",
+                "priority": "critical",
+                "status": "open",
+            },
+            {
+                "id": "T005",
+                "title": "Printer issue",
+                "priority": "low",
+                "status": "open",
+            },
+        ]
+
+    # TEST 1: Empty list
+
+    def test_empty_ticket_list(self):
+        result = get_work_queue([])
+
+        self.assertEqual(result, [])
+
+    # TEST 2: Only open tickets should appear
+
+    def test_only_open_tickets(self):
+        result = get_work_queue(self.tickets)
+
+        ticket_ids = []
+
+        for ticket in result:
+            ticket_ids.append(ticket["id"])
+
+        self.assertEqual(
+            ticket_ids,
+            ["T004", "T002", "T005"]
+        )
+
+    # TEST 3: Resolved tickets should not appear
+
+    def test_resolved_tickets_excluded(self):
+        result = get_work_queue(self.tickets)
+
+        for ticket in result:
+            self.assertNotEqual(ticket["status"], "resolved")
+
+    # TEST 4: In-progress tickets should not appear
+
+    def test_in_progress_tickets_excluded(self):
+        result = get_work_queue(self.tickets)
+
+        for ticket in result:
+            self.assertNotEqual(ticket["status"], "in_progress")
+
+    # TEST 5: Critical tickets should come first
+
+    def test_critical_tickets_first(self):
+        result = get_work_queue(self.tickets)
+
+        self.assertEqual(result[0]["id"], "T004")
+
+    # TEST 6: Tickets should be sorted by priority
+
+    def test_priority_order(self):
+        result = get_work_queue(self.tickets)
+
+        priorities = []
+
+        for ticket in result:
+            priorities.append(ticket["priority"])
+
+        self.assertEqual(
+            priorities,
+            ["critical", "high", "low"]
+        )
+
+    # TEST 7: Tickets with the same priority
+    # should be sorted using their ID numbers
+
+    def test_numeric_ticket_id_sorting(self):
         tickets = [
-            make_ticket("T001", "low"),
-            make_ticket("T002", "critical"),
-            make_ticket("T003", "high"),
+            {
+                "id": "T010",
+                "title": "Issue 10",
+                "priority": "high",
+                "status": "open",
+            },
+            {
+                "id": "T002",
+                "title": "Issue 2",
+                "priority": "high",
+                "status": "open",
+            },
+            {
+                "id": "T001",
+                "title": "Issue 1",
+                "priority": "high",
+                "status": "open",
+            },
         ]
 
         result = get_work_queue(tickets)
 
-        self.assertEqual(
-            [ticket["id"] for ticket in result],
-            ["T002", "T003", "T001"],
-        )
+        ticket_ids = []
 
-    def test_tickets_are_sorted_by_priority(self):
-        tickets = [
-            make_ticket("T001", "medium"),
-            make_ticket("T002", "low"),
-            make_ticket("T003", "high"),
-            make_ticket("T004", "critical"),
-        ]
-
-        result = get_work_queue(tickets)
+        for ticket in result:
+            ticket_ids.append(ticket["id"])
 
         self.assertEqual(
-            [ticket["priority"] for ticket in result],
-            ["critical", "high", "medium", "low"],
+            ticket_ids,
+            ["T001", "T002", "T010"]
         )
 
-    def test_same_priority_uses_numeric_ticket_id(self):
-        tickets = [
-            make_ticket("T010", "high"),
-            make_ticket("T002", "high"),
-            make_ticket("T001", "high"),
-        ]
+    # TEST 8: Original ticket list must not change
 
-        result = get_work_queue(tickets)
+    def test_original_list_not_modified(self):
+        original_tickets = deepcopy(self.tickets)
 
-        self.assertEqual(
-            [ticket["id"] for ticket in result],
-            ["T001", "T002", "T010"],
-        )
+        get_work_queue(self.tickets)
 
-    def test_resolved_tickets_are_excluded(self):
-        tickets = [
-            make_ticket("T001", "critical", "resolved"),
-            make_ticket("T002", "high", "open"),
-            make_ticket("T003", "medium", "in_progress"),
-        ]
-
-        result = get_work_queue(tickets)
-
-        self.assertEqual(
-            [ticket["id"] for ticket in result],
-            ["T002", "T003"],
-        )
-
-    def test_empty_ticket_list_returns_empty_list(self):
-        self.assertEqual(get_work_queue([]), [])
-
-    def test_original_ticket_list_is_not_reordered(self):
-        tickets = [
-            make_ticket("T003", "low"),
-            make_ticket("T001", "critical"),
-            make_ticket("T002", "high"),
-        ]
-
-        original_ids = [ticket["id"] for ticket in tickets]
-
-        get_work_queue(tickets)
-
-        self.assertEqual(
-            [ticket["id"] for ticket in tickets],
-            original_ids,
-        )
+        self.assertEqual(self.tickets, original_tickets)
 
 
 if __name__ == "__main__":

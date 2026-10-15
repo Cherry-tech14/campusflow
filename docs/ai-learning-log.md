@@ -1,75 +1,193 @@
-# CampusFlow AI Learning Log
+# CampusFlow Next — AI Learning Log
 
-## Engineer A
-**Responsibilities:** Ticket creation, input validation, priority engine, persistence storage 
-and automated tests.
+## Project Information
 
-### Log 1: Ticket Creation
-**Problem:** Generate unique ticket IDs (T001, T002, etc.).
+Project: CampusFlow Next
+Team Members:
+- Engineer A: Mariam Mohammed
+- Engineer B: Onah Samuel
 
-**AI Assistance:** AI explained how to use loops, string slicing, and f-strings to generate sequential IDs.
+## Purpose of the AI Learning Log
 
-**What I Learned:** How `f"T{highest_id + 1:03d}"` generates ticket IDs.
+This document records how AI assistance was used during
+the development of CampusFlow Next.
 
-**Verification:** Tested ticket creation and unique IDs using unittest. Tests passed.
+It explains:
+- The problems encountered.
+- The questions asked.
+- The AI suggestions received.
+- The solutions implemented.
+- How the solutions were tested.
+- What each engineer learned.
 
-### Log 2: Input Validation and Priority Engine
-**Problem:** Validate ticket information and calculate priority correctly.
 
-**AI Assistance:** AI explained conditional statements, ValueError, and priority rules.
+## Engineer A — Mariam Mohammed
 
-**What I Learned:** How to reject invalid inputs and calculate critical, high, medium, and low priorities.
+### Learning Entry 1: Input Validation
 
-**Verification:** Tested valid and invalid inputs and all four priority levels. Tests passed.
+**Problem Encountered:**
+Ensuring that invalid ticket information was rejected.
 
-### Log 3: Automated Testing
-**Problem:** Verify that ticket creation, validation, and priority calculation work correctly.
+**AI Assistance:**
+Received guidance on validating ticket titles, categories,
+urgency levels, and affected users.
 
-**AI Assistance:** AI explained unittest, assertEqual(), assertRaises(), and setUp().
+**Implementation:**
+Implemented validation functions in validation.py.
 
-**What I Learned:** How to write automated tests and check expected results.
+**Verification:**
+Tested valid and invalid ticket inputs using unittest.
 
-**Verification:** Ran `python3 -m unittest discover -s tests -v`. All 16 Engineer A ticket tests passed.
+**What I Learned:**
+How to validate user input before modifying application data.
 
-### Summary
-AI helped me understand Python concepts, improve my implementation, and write automated tests. I verified my work through testing.
+### Learning Entry 2: Follow-up Notes
 
-# CampusFlow AI Learning Log
+**Problem Encountered:**
+Implementing notes without allowing invalid operations
+to modify tickets.
 
-## Engineer B
+**AI Assistance:**
+Received guidance on note validation and ID generation.
 
-**Responsibilities:** Ticket assignment, status management, work queue, reports, and automated testing.
+**Implementation:**
+Implemented follow-up notes in notes.py.
 
-### Log 1: Ticket Assignment and Status Management
+**Verification:**
+Tested valid notes, invalid messages, and restrictions
+on resolved tickets.
 
-**Problem:** Assign tickets correctly and ensure they follow valid status transitions.
+**What I Learned:**
+How to preserve data integrity when adding related records.
 
-**AI Assistance:** AI explained ticket lookup, input validation, conditional statements, and `ValueError`.
+### Learning Entry 3: JSON Storage Reliability
 
-**What I Learned:** How to assign staff members and manage ticket statuses safely.
+**Problem Encountered:**
+Preventing invalid JSON data and duplicate ticket IDs
+from affecting existing records.
 
-**Verification:** Created tests for valid assignments, invalid inputs, and status transitions.
+**AI Assistance:**
+Received guidance on storage validation and error handling.
 
-### Log 2: Work Queue and Reports
+**Implementation:**
+Improved storage.py.
 
-**Problem:** Organize unresolved tickets by priority and generate ticket statistics.
+**Verification:**
+Tested invalid JSON, duplicate IDs, and saving/loading.
 
-**AI Assistance:** AI explained sorting, lambda functions, dictionaries, and loops.
+**What I Learned:**
+Why stored data must be validated before being trusted.
 
-**What I Learned:** How to sort tickets and count tickets by status and priority.
+### Learning Entry 4: Git Integration
 
-**Verification:** Created tests for queue ordering, resolved tickets, and report accuracy.
+**Problem Encountered:**
+Integrating changes from two engineers without losing work.
 
-### Log 3: Automated Testing
+**AI Assistance:**
+Received guidance on Git branches, fetching, merging,
+resolving conflicts, and running integration tests.
 
-**Problem:** Verify that Engineer B's functions work correctly.
+**Implementation:**
+Merged Engineer B's changes into the integration branch.
 
-**AI Assistance:** AI explained Python's `unittest`, `setUp()`, `assertEqual()`, and `assertRaises()`.
+**Verification:**
+Ran the complete automated test suite.
 
-**What I Learned:** How to test expected results and handle invalid situations.
+**What I Learned:**
+How to integrate independently developed modules and
+verify that they work together.
 
-**Verification:** Prepared 23 automated tests to check Engineer B's functions.
 
-### Summary
+## Engineer B — Onah Samuel
 
-AI helped me understand ticket management, queue sorting, report generation, and automated testing. I prepared tests to verify my work and improve CampusFlow's reliability.
+### Learning Entry 1: Work Queue
+
+**Problem Encountered:**
+[Engineer B should describe the actual problem encountered.]
+
+**AI Assistance:**
+[Describe the AI guidance received.]
+
+**Implementation:**
+Implemented queue.py.
+
+**Verification:**
+Tested queue filtering and priority ordering.
+
+**What I Learned:**
+[Engineer B should describe what he learned.]
+
+### Learning Entry 2: Search and Filtering
+
+**Problem Encountered:**
+[Engineer B should describe the actual problem encountered.]
+
+**AI Assistance:**
+[Describe the AI guidance received.]
+
+**Implementation:**
+Implemented search.py.
+
+**Verification:**
+Tested title searching and combined filters.
+
+**What I Learned:**
+[Engineer B should describe what he learned.]
+
+### Learning Entry 3: Reporting
+
+**Problem Encountered:**
+[Engineer B should describe the actual problem encountered.]
+
+**AI Assistance:**
+[Describe the AI guidance received.]
+
+**Implementation:**
+Implemented reports.py.
+
+**Verification:**
+Tested report counts and resolution percentages.
+
+**What I Learned:**
+[Engineer B should describe what he learned.]
+
+### Learning Entry 4: Engineering Understanding Check
+
+**Problem Encountered:**
+Updating the quiz and its tests to match the project requirements.
+
+**AI Assistance:**
+Received guidance on quiz validation, scoring,
+written explanations, and automated tests.
+
+**Implementation:**
+Updated understanding_checks.py and test_understanding.py.
+
+**Verification:**
+Confirmed that the updated understanding-check tests passed.
+
+**What I Learned:**
+[Engineer B should describe what he learned.]
+
+## Final Integration Testing
+
+Both engineers' contributions were integrated into:
+
+test/campusflow-integration
+
+The integrated project was tested using:
+
+python3 -m unittest discover -s tests -v
+
+Result:
+
+Ran 69 tests
+
+
+## Reflection
+
+AI assistance supported debugging, code review,
+test development, and understanding project requirements.
+
+However, AI suggestions were checked against the project
+requirements and verified through automated and manual testing.

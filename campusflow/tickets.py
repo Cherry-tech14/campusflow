@@ -1,87 +1,64 @@
-categories = ["Network", "Hardware", "Software", "Other"]
-urgencies = ["low", "medium", "high"]
+from campusflow.validation import (
+    validate_title,
+    validate_category,
+    validate_urgency,
+    validate_affected_users,
+)
+
 
 def calculate_priority(urgency, affected_users):
-
-    if not isinstance(urgency, str):
-        raise ValueError("Invalid urgency")
-
-    urgency = urgency.strip().lower()
-
-    if urgency not in urgencies:
-        raise ValueError("Invalid urgency")
-
-    if type(affected_users) != int or affected_users <= 0:
-        raise ValueError("Affected users must be a positive integer")
+    urgency = validate_urgency(urgency)
+    affected_users = validate_affected_users(affected_users)
 
     if urgency == "high" and affected_users >= 10:
         return "critical"
 
-    elif urgency == "high" or affected_users >= 10:
+    elif urgency == "high":
         return "high"
 
-    elif urgency == "medium" or affected_users >= 3:
+    elif urgency == "medium":
         return "medium"
 
     else:
         return "low"
 
 
-def create_ticket(tickets, title, category, urgency, affected_users):
-
-    
-    if not isinstance(title, str) or title.strip() == "":
-        raise ValueError("Title cannot be empty")
-
-    
-    if not isinstance(category, str):
-        raise ValueError("Invalid category")
-
-    category = category.strip().capitalize()
-
-    if category not in categories:
-        raise ValueError("Invalid category")
-
-    if not isinstance(urgency, str):
-        raise ValueError("Invalid urgency")
-
-    urgency = urgency.strip().lower()
-
-    if urgency not in urgencies:
-        raise ValueError("Invalid urgency")
-
-    
-    if type(affected_users) != int or affected_users <= 0:
-        raise ValueError("Affected users must be a positive integer")
-
-    
-    priority = calculate_priority(urgency, affected_users)
-
-    
-    highest_id = 0
+def next_ticket_id(tickets):
+    highest_number = 0
 
     for ticket in tickets:
-        number = int(ticket["id"][1:])
+        ticket_id = ticket["id"]
 
-        if number > highest_id:
-            highest_id = number
+        number = int(ticket_id[1:])
 
-    
-    new_id = f"T{highest_id + 1:03d}"
+        if number > highest_number:
+            highest_number = number
 
-    
-    new_ticket = {
-        "id": new_id,
-        "title": title.strip(),
+    next_number = highest_number + 1
+
+    return f"T{next_number:03d}"
+
+
+def create_ticket(tickets, title, category, urgency, affected_users):
+    title = validate_title(title)
+    category = validate_category(category)
+    urgency = validate_urgency(urgency)
+    affected_users = validate_affected_users(affected_users)
+
+    priority = calculate_priority(urgency, affected_users)
+
+    ticket = {
+        "id": next_ticket_id(tickets),
+        "title": title,
         "category": category,
         "urgency": urgency,
         "affected_users": affected_users,
         "priority": priority,
         "status": "open",
-        "assigned_to": None
+        "assigned_to": None,
+        "notes": [],
     }
 
-    
-    tickets.append(new_ticket)
+    tickets.append(ticket)
 
-    return new_ticket
+    return ticket

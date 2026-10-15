@@ -1,4 +1,12 @@
+from campusflow.validation import (
+    validate_ticket_id,
+    validate_staff,
+    validate_status,
+)
+
+
 def find_ticket(tickets, ticket_id):
+    validate_ticket_id(ticket_id)
 
     for ticket in tickets:
         if ticket["id"] == ticket_id:
@@ -8,56 +16,48 @@ def find_ticket(tickets, ticket_id):
 
 
 def assign_ticket(tickets, ticket_id, staff_name):
-
     ticket = find_ticket(tickets, ticket_id)
 
     if ticket["status"] == "resolved":
         raise ValueError("Cannot assign a resolved ticket")
 
-    if not isinstance(staff_name, str) or staff_name.strip() == "":
-        raise ValueError("Staff name cannot be empty")
+    staff_name = validate_staff(staff_name)
 
-    ticket["assigned_to"] = staff_name.strip()
+    ticket["assigned_to"] = staff_name
 
     return ticket
 
 
-def update_status(tickets, ticket_id, new_status):
-
-    ticket = find_ticket(tickets, ticket_id)
-
-    if not isinstance(new_status, str):
-        raise ValueError("Invalid status")
-
-    new_status = new_status.strip().lower()
-
-    valid_statuses = ["open", "in_progress", "resolved"]
-
-    if new_status not in valid_statuses:
-        raise ValueError("Invalid status")
+def can_transition(ticket, new_status):
+    new_status = validate_status(new_status)
 
     current_status = ticket["status"]
 
-    if current_status == "resolved":
-
-        if new_status != "open":
-            raise ValueError("Resolved tickets must be reopened first")
-
-    elif current_status == "open":
-
-        if new_status != "in_progress":
-            raise ValueError("Open tickets can only move to in_progress")
-
-        if ticket["assigned_to"] is None:
-            raise ValueError("Assign the ticket before starting work")
+    if current_status == "open":
+        if new_status == "in_progress":
+            if ticket["assigned_to"] is not None:
+                return True
 
     elif current_status == "in_progress":
+        if new_status == "resolved":
+            return True
 
-        if new_status != "resolved":
-            raise ValueError("In-progress tickets can only move to resolved")
+    elif current_status == "resolved":
+        if new_status == "open":
+            return True
 
-    else:
-        raise ValueError("Invalid current ticket status")
+    return False
+
+
+def update_status(tickets, ticket_id, new_status):
+    ticket = find_ticket(tickets, ticket_id)
+
+    new_status = validate_status(new_status)
+
+    allowed = can_transition(ticket, new_status)
+
+    if allowed == False:
+        raise ValueError("Invalid ticket status transition")
 
     ticket["status"] = new_status
 

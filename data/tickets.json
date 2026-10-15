@@ -7,7 +7,8 @@
         "affected_users": 10,
         "priority": "critical",
         "status": "open",
-        "assigned_to": null
+        "assigned_to": null,
+        "notes": []
     },
     {
         "id": "T002",
@@ -16,7 +17,41 @@
         "urgency": "high",
         "affected_users": 4,
         "priority": "high",
+        "status": "resolved",
+        "assigned_to": "dominion",
+        "notes": []
+    },
+    {
+        "id": "T003",
+        "title": "internet failure",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 15,
+        "priority": "critical",
         "status": "open",
-        "assigned_to": "dominion"
+        "assigned_to": null,
+        "notes": []
+    },
+    {
+        "id": "T004",
+        "title": "Internet failure",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 15,
+        "priority": "critical",
+        "status": "open",
+        "assigned_to": null,
+        "notes": []
+    },
+    {
+        "id": "T005",
+        "title": "Wi-fi down",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 15,
+        "priority": "critical",
+        "status": "open",
+        "assigned_to": null,
+        "notes": []
     }
 ]
