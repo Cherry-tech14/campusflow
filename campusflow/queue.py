@@ -13,7 +13,6 @@ def get_work_queue(tickets):
         if ticket["status"] == "open":
             open_tickets.append(ticket)
 
-    # Put tickets in order using simple loops.
     for i in range(len(open_tickets)):
         for j in range(i + 1, len(open_tickets)):
 

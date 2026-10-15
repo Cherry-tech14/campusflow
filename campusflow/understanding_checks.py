@@ -1,8 +1,3 @@
-# CampusFlow Next - Engineering Understanding Check
-
-
-# QUESTION BANK
-
 QUESTIONS = [
     {
         "question": "Ticket T001 is open and unassigned. A user tries to move it to in_progress. What should happen?",
@@ -66,9 +61,6 @@ QUESTIONS = [
     }
 ]
 
-
-# VALIDATE USER ANSWER
-
 def validate_answer(answer):
     if not isinstance(answer, str):
         raise ValueError("Answer must be a string")
@@ -81,15 +73,11 @@ def validate_answer(answer):
     return answer
 
 
-# CHECK ONE ANSWER
-
 def check_answer(question, answer):
     answer = validate_answer(answer)
 
     return answer == question["answer"]
 
-
-# CALCULATE TOTAL SCORE
 
 def calculate_score(answers):
     if len(answers) != len(QUESTIONS):
@@ -104,8 +92,6 @@ def calculate_score(answers):
     return score
 
 
-# DISPLAY QUESTIONS
-
 def display_question(question, number):
     print(f"\nQuestion {number}")
     print(question["question"])
@@ -113,8 +99,6 @@ def display_question(question, number):
     for option, description in question["options"].items():
         print(f"{option}. {description}")
 
-
-# GET USER ANSWER
 
 def get_answer():
     while True:
@@ -126,8 +110,6 @@ def get_answer():
         except ValueError as error:
             print(error)
 
-
-# GET EXPLANATIONS
 
 def get_explanations():
     explanations = []
@@ -158,8 +140,6 @@ def get_explanations():
     return explanations
 
 
-
-
 def display_result(score):
     print("\n=== YOUR RESULT ===")
 
@@ -177,8 +157,6 @@ def display_result(score):
     else:
         print("Keep practicing and reviewing the project.")
 
-
-# RUN THE UNDERSTANDING CHECK
 
 def run_understanding_check():
 

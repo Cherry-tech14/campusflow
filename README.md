@@ -37,10 +37,6 @@ CampusFlow Next addresses these challenges by providing a structured helpdesk ti
 
 #### Engineer A _ Mariam Mohammed
 
-#### Github: 
-
-
-
 #### Responsibilities
 
 - Input validation.
