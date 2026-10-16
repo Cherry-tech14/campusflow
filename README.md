@@ -37,6 +37,7 @@ CampusFlow Next addresses these challenges by providing a structured helpdesk ti
 
 #### Engineer A _ Mariam Mohammed
 
+
 #### Responsibilities
 
 - Input validation.
@@ -153,3 +154,71 @@ JSON storage:
 ```bash
 python3 -m unittest discover -s tests -p "test_storage.py" -v
 ```
+
+
+
+## Engineer B — Onah Samuel
+
+**GitHub:** https://github.com/SamuelOnah
+
+### Responsibilities
+
+- Ticket search and combined filtering.
+- Ticket reports and analytics.
+- Engineering Understanding Check.
+- Command-line interface integration.
+- Automated testing for search, reporting, and understanding-check functionality.
+
+### Contributions
+
+1. Worked on ticket search functionality using title matching and optional filters for category, status, and priority.
+2. Worked on combining search filters so that matching tickets satisfy all supplied criteria.
+3. Contributed to ticket reporting, including ticket totals, status counts, priority counts, category counts, unresolved tickets, and resolution percentages.
+4. Worked on the interactive Engineering Understanding Check, covering important application rules through multiple-choice scenarios.
+5. Contributed to command-line interaction for accessing application features.
+6. Worked on automated tests for search, reporting, and understanding-check functionality.
+
+### Main Files
+
+**Application modules**
+- `campusflow/search.py`
+- `campusflow/reports.py`
+- `campusflow/understanding_checks.py`
+- `main.py`
+
+**Test modules**
+- `tests/test_search.py`
+- `tests/test_reports.py`
+- `tests/test_understanding.py`
+
+### Testing
+
+CampusFlow Next uses Python's built-in `unittest` framework.
+
+Run the complete test suite from the project root:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Run Engineer B's test modules individually:
+
+**Ticket search**
+```bash
+python3 -m unittest discover -s tests -p "test_search.py" -v
+```
+
+**Reports and analytics**
+```bash
+python3 -m unittest discover -s tests -p "test_reports.py" -v
+```
+
+**Engineering Understanding Check**
+```bash
+python3 -m unittest discover -s tests -p "test_understanding.py" -v
+```
+
+
+
+#### Main Work Repo 
+***Github**  https://github.com/Cherry-tech14/campusflow
