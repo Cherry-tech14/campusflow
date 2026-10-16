@@ -134,7 +134,7 @@ def load_tickets(file_path=DATA_FILE):
 def save_tickets(tickets, file_path=DATA_FILE):
     file_path = Path(file_path)
 
-    # Work on a copy so validation cannot change the original list.
+
     import copy
     tickets_copy = copy.deepcopy(tickets)
 

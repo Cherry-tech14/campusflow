@@ -53,5 +53,38 @@
         "status": "open",
         "assigned_to": null,
         "notes": []
+    },
+    {
+        "id": "T006",
+        "title": "campus internet outage",
+        "category": "Network",
+        "urgency": "high",
+        "affected_users": 20,
+        "priority": "critical",
+        "status": "open",
+        "assigned_to": "Daniel",
+        "notes": [
+            {
+                "note_id": "N001",
+                "author": "Daniel",
+                "message": "Network engineers are investigating the campus outage"
+            },
+            {
+                "note_id": "N002",
+                "author": "Sarah",
+                "message": "The network connection has been restored"
+            }
+        ]
+    },
+    {
+        "id": "T007",
+        "title": "computer laboratory system failure",
+        "category": "Hardware",
+        "urgency": "high",
+        "affected_users": 5,
+        "priority": "high",
+        "status": "open",
+        "assigned_to": null,
+        "notes": []
     }
 ]

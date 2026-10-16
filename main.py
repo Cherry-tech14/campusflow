@@ -151,7 +151,6 @@ def main():
             except (ValueError, OSError) as error:
                 print("Error:", error)
 
-        # CHANGE STATUS
         elif choice == "4":
             print("\n=== CHANGE TICKET STATUS ===")
 
@@ -195,7 +194,6 @@ def main():
             except (ValueError, OSError) as error:
                 print("Error:", error)
 
-        # REOPEN TICKET
         elif choice == "5":
             print("\n=== REOPEN TICKET ===")
 
@@ -220,7 +218,6 @@ def main():
             except (ValueError, OSError) as error:
                 print("Error:", error)
 
-        # WORK QUEUE
         elif choice == "6":
             print("\n=== OPEN WORK QUEUE ===")
 
@@ -228,7 +225,6 @@ def main():
 
             display_tickets(queue)
 
-        # ADD NOTE
         elif choice == "7":
             print("\n=== ADD FOLLOW-UP NOTE ===")
 
@@ -258,7 +254,6 @@ def main():
             except (ValueError, OSError) as error:
                 print("Error:", error)
 
-        # VIEW NOTES
         elif choice == "8":
             print("\n=== VIEW TICKET NOTES ===")
 
@@ -279,7 +274,6 @@ def main():
             except ValueError as error:
                 print("Error:", error)
 
-        # SEARCH TICKETS
         elif choice == "9":
             print("\n=== SEARCH TICKETS ===")
             print("Leave a filter blank to skip it.")
